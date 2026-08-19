@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>HDR Luminance Controls</title>
+<style>
+  :root {
+    --bg: #080808;
+    --surface: #111111;
+    --surface-raised: #181818;
+    --border: #222222;
+    --text-primary: #e0e0e0;
+    --text-secondary: #666666;
+    --text-dim: #444444;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: -apple-system, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .app { width: 100%; max-width: 960px; padding: 2rem 1.5rem; display: flex; flex-direction: column; gap: 2rem; }
+
+  /* Preview stage */
+  .stage {
+    width: 100%; aspect-ratio: 2.5/1; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; position: relative;
+  }
+  .container {
+    width: var(--container-size); height: var(--container-size);
+    background: #000; border-radius: var(--container-radius);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .dot {
+    width: var(--dot-size); height: var(--dot-size);
+    border-radius: 50%; background: #fff; transition: all 0.2s;
+  }
+  @media (dynamic-range: high) {
+    .dot.hdr-active {
+      background: color(display-p3 var(--p3-r) var(--p3-g) var(--p3-b));
+      box-shadow:
+        0 0 var(--glow-inner) var(--glow-inner-spread) color(display-p3 var(--p3-r) var(--p3-g) var(--p3-b) / var(--glow-opacity)),
+        0 0 var(--glow-mid) var(--glow-mid-spread) color(display-p3 var(--p3-r) var(--p3-g) var(--p3-b) / calc(var(--glow-opacity) * 0.5)),
+        0 0 var(--glow-outer) var(--glow-outer-spread) color(display-p3 var(--p3-r) var(--p3-g) var(--p3-b) / calc(var(--glow-opacity) * 0.15));
+    }
+  }
+
+  /* Controls - sliders */
+  .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .control-group { background: var(--surface); padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+  .control-group.full-width { grid-column: 1 / -1; }
+  .group-label { font-size: 0.6rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); font-family: monospace; }
+  .slider-row { display: flex; align-items: center; gap: 1rem; }
+  .slider-label { font-family: monospace; font-size: 0.65rem; color: var(--text-secondary); width: 80px; }
+  input[type="range"] { -webkit-appearance: none; flex: 1; height: 2px; background: var(--border); outline: none; }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--text-primary); cursor: pointer; }
+  .slider-value { font-family: monospace; font-size: 0.65rem; color: var(--text-secondary); width: 52px; text-align: right; }
+
+  /* CSS output */
+  .output { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; }
+  .output-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+  .output-header span { font-family: monospace; font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); }
+  .copy-btn { font-family: monospace; font-size: 0.6rem; background: var(--surface-raised); color: var(--text-secondary); border: 1px solid var(--border); padding: 0.3em 0.8em; border-radius: 4px; cursor: pointer; }
+  .code-block { font-family: monospace; font-size: 0.65rem; line-height: 1.7; color: #888; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="stage">
+    <div class="container" id="container">
+      <div class="dot hdr-active" id="dot"></div>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="control-group">
+      <div class="group-label">P3 Channels</div>
+      <div class="slider-row"><div class="slider-label">Red</div><input type="range" id="p3r" min="0" max="1.5" step="0.01" value="1"><div class="slider-value" id="p3r-val">1.00</div></div>
+      <div class="slider-row"><div class="slider-label">Green</div><input type="range" id="p3g" min="0" max="1.5" step="0.01" value="1"><div class="slider-value" id="p3g-val">1.00</div></div>
+      <div class="slider-row"><div class="slider-label">Blue</div><input type="range" id="p3b" min="0" max="1.5" step="0.01" value="1"><div class="slider-value" id="p3b-val">1.00</div></div>
+      <div class="slider-row"><div class="slider-label">Glow &alpha;</div><input type="range" id="glowOpacity" min="0" max="1" step="0.01" value="0.6"><div class="slider-value" id="glowOpacity-val">0.60</div></div>
+    </div>
+    <div class="control-group">
+      <div class="group-label">Glow Spread</div>
+      <div class="slider-row"><div class="slider-label">Inner</div><input type="range" id="glowInner" min="0" max="20" step="0.5" value="4"><div class="slider-value" id="glowInner-val">4.0px</div></div>
+      <div class="slider-row"><div class="slider-label">Mid</div><input type="range" id="glowMid" min="0" max="40" step="1" value="12"><div class="slider-value" id="glowMid-val">12px</div></div>
+      <div class="slider-row"><div class="slider-label">Outer</div><input type="range" id="glowOuter" min="0" max="80" step="1" value="24"><div class="slider-value" id="glowOuter-val">24px</div></div>
+    </div>
+    <div class="control-group full-width">
+      <div class="group-label">Geometry</div>
+      <div class="slider-row"><div class="slider-label">Dot size</div><input type="range" id="dotSize" min="2" max="32" step="1" value="8"><div class="slider-value" id="dotSize-val">8px</div></div>
+      <div class="slider-row"><div class="slider-label">Box size</div><input type="range" id="containerSize" min="32" max="200" step="2" value="64"><div class="slider-value" id="containerSize-val">64px</div></div>
+      <div class="slider-row"><div class="slider-label">Radius</div><input type="range" id="containerRadius" min="0" max="50" step="1" value="12"><div class="slider-value" id="containerRadius-val">12px</div></div>
+    </div>
+  </div>
+  <div class="output">
+    <div class="output-header"><span>Generated CSS</span><button class="copy-btn" onclick="copyCSS()">Copy</button></div>
+    <div class="code-block" id="css-output"></div>
+  </div>
+</div>
+<script>
+const params = ['p3r','p3g','p3b','glowOpacity','glowInner','glowMid','glowOuter','dotSize','containerSize','containerRadius'];
+params.forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', update);
+});
+function val(id) { return parseFloat(document.getElementById(id).value); }
+function update() {
+  const s = document.documentElement.style;
+  s.setProperty('--p3-r', val('p3r').toFixed(3));
+  s.setProperty('--p3-g', val('p3g').toFixed(3));
+  s.setProperty('--p3-b', val('p3b').toFixed(3));
+  s.setProperty('--glow-opacity', val('glowOpacity').toFixed(3));
+  s.setProperty('--glow-inner', val('glowInner') + 'px');
+  s.setProperty('--glow-inner-spread', (val('glowInner')*0.25) + 'px');
+  s.setProperty('--glow-mid', val('glowMid') + 'px');
+  s.setProperty('--glow-mid-spread', (val('glowMid')*0.33) + 'px');
+  s.setProperty('--glow-outer', val('glowOuter') + 'px');
+  s.setProperty('--glow-outer-spread', (val('glowOuter')*0.33) + 'px');
+  s.setProperty('--dot-size', val('dotSize') + 'px');
+  s.setProperty('--container-size', val('containerSize') + 'px');
+  s.setProperty('--container-radius', val('containerRadius') + 'px');
+  params.forEach(id => {
+    const ve = document.getElementById(id + '-val');
+    if (ve) {
+      const v = val(id);
+      ve.textContent = ['p3r','p3g','p3b','glowOpacity'].includes(id) ? v.toFixed(2) : v + 'px';
+    }
+  });
+  updateCSS();
+}
+function updateCSS() {
+  const r=val('p3r').toFixed(2), g=val('p3g').toFixed(2), b=val('p3b').toFixed(2);
+  const o=val('glowOpacity').toFixed(2), gi=val('glowInner'), gm=val('glowMid'), go=val('glowOuter');
+  document.getElementById('css-output').textContent =
+`.container { width: ${val('containerSize')}px; height: ${val('containerSize')}px; background: #000; border-radius: ${val('containerRadius')}px; }
+.dot { width: ${val('dotSize')}px; height: ${val('dotSize')}px; border-radius: 50%; background: #fff; }
+@media (dynamic-range: high) {
+  .dot {
+    background: color(display-p3 ${r} ${g} ${b});
+    box-shadow:
+      0 0 ${gi}px ${(gi*0.25).toFixed(1)}px color(display-p3 ${r} ${g} ${b} / ${o}),
+      0 0 ${gm}px ${(gm*0.33).toFixed(1)}px color(display-p3 ${r} ${g} ${b} / ${(val('glowOpacity')*0.5).toFixed(2)}),
+      0 0 ${go}px ${(go*0.33).toFixed(1)}px color(display-p3 ${r} ${g} ${b} / ${(val('glowOpacity')*0.15).toFixed(2)});
+  }
+}`;
+}
+function copyCSS() {
+  navigator.clipboard.writeText(document.getElementById('css-output').textContent).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy', 1500);
+  });
+}
+update();
+</script>
+</body>
+</html>
