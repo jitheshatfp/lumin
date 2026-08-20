@@ -33,9 +33,7 @@
 
 .controls {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1px;
-  background: var(--border);
+  grid-template-columns: 1fr;
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
@@ -50,6 +48,18 @@
   gap: 1rem;
 }
 
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .groupLabel {
   font-size: 0.65rem;
   font-weight: 500;
@@ -57,7 +67,6 @@
   text-transform: uppercase;
   color: var(--text-dim);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  width: 100%;
   margin: 0 0 0.5rem 0;
   padding: 0 0 0.75rem 0;
   border-bottom: 1px solid var(--border);
@@ -72,14 +81,60 @@
 .checkboxRow {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 1rem;
 }
 
-.checkbox {
+.toggle {
+  position: relative;
+  display: inline-flex;
+  width: 40px;
+  height: 24px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.toggleInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.toggleTrack {
+  position: absolute;
+  inset: 0;
+  background: var(--control-track);
+  border-radius: 999px;
+  transition: background 0.15s ease;
+}
+
+.toggleTrack::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
   width: 18px;
   height: 18px;
-  accent-color: var(--text-primary);
-  cursor: pointer;
+  border-radius: 50%;
+  background: var(--text-primary);
+  transition: transform 0.15s ease;
+}
+
+.toggleInput:checked + .toggleTrack {
+  background: var(--text-primary);
+}
+
+.toggleInput:checked + .toggleTrack::before {
+  background: var(--bg);
+  transform: translateX(16px);
+}
+
+.toggleInput:focus-visible + .toggleTrack {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .sliderLabel {

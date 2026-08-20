@@ -221,7 +221,10 @@ export default function PlexusAnimation() {
 
       <div className={styles.controls}>
         <fieldset className={styles.controlGroup}>
-          <legend className={styles.groupLabel}>Field</legend>
+          <legend className={styles.visuallyHidden}>Field</legend>
+          <div className={styles.groupLabel} aria-hidden="true">
+            Field
+          </div>
           <div className={styles.sliderRow}>
             <label htmlFor="plexus-brightness" className={styles.sliderLabel}>
               Brightness
@@ -269,15 +272,19 @@ export default function PlexusAnimation() {
             </output>
           </div>
           <div className={styles.checkboxRow}>
-            <input
-              type="checkbox"
-              className={styles.checkbox}
-              id="plexus-glow"
-              checked={glowEnabled}
-              onChange={(e) => setGlowEnabled(e.target.checked)}
-            />
-            <label htmlFor="plexus-glow" className={styles.sliderLabel}>
+            <span id="plexus-glow-label" className={styles.sliderLabel}>
               Glow
+            </span>
+            <label className={styles.toggle}>
+              <input
+                type="checkbox"
+                role="switch"
+                className={styles.toggleInput}
+                checked={glowEnabled}
+                onChange={(e) => setGlowEnabled(e.target.checked)}
+                aria-labelledby="plexus-glow-label"
+              />
+              <span className={styles.toggleTrack} aria-hidden="true" />
             </label>
           </div>
         </fieldset>

@@ -159,7 +159,10 @@ export default function HDRLuminanceControls() {
             key={group.legend}
             className={`${styles.controlGroup} ${group.fullWidth ? styles.fullWidth : ""}`}
           >
-            <legend className={styles.groupLabel}>{group.legend}</legend>
+            <legend className={styles.visuallyHidden}>{group.legend}</legend>
+            <div className={styles.groupLabel} aria-hidden="true">
+              {group.legend}
+            </div>
             {group.fields.map((field) => (
               <div className={styles.sliderRow} key={field.key}>
                 <label htmlFor={field.key} className={styles.sliderLabel}>

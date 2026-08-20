@@ -84,6 +84,18 @@
   grid-column: 1 / -1;
 }
 
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .groupLabel {
   font-size: 0.65rem;
   font-weight: 500;
@@ -91,7 +103,6 @@
   text-transform: uppercase;
   color: var(--text-dim);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  width: 100%;
   margin: 0 0 0.5rem 0;
   padding: 0 0 0.75rem 0;
   border-bottom: 1px solid var(--border);
