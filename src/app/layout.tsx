@@ -6,27 +6,27 @@ const siteUrl = "https://hdr-luminance.example.com";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "HDR Luminance Controls",
-    template: "%s · HDR Luminance Controls",
+    default: "Design Prototypes",
+    template: "%s · Design Prototypes",
   },
   description:
-    "Tune Display P3 channel values and glow spread for HDR-capable screens, then copy ready-to-use CSS built on @media (dynamic-range: high).",
+    "Interactive prototypes: tune Display P3 HDR glow CSS, and explore an interactive plexus node field.",
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "HDR Luminance Controls",
+    title: "Design Prototypes",
     description:
-      "Tune Display P3 channel values and glow spread for HDR-capable screens, then copy the generated CSS.",
+      "Interactive prototypes: tune Display P3 HDR glow CSS, and explore an interactive plexus node field.",
     url: "/",
-    siteName: "HDR Luminance Controls",
+    siteName: "Design Prototypes",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "HDR Luminance Controls",
+    title: "Design Prototypes",
     description:
-      "Tune Display P3 channel values and glow spread for HDR-capable screens, then copy the generated CSS.",
+      "Interactive prototypes: tune Display P3 HDR glow CSS, and explore an interactive plexus node field.",
   },
 };
 

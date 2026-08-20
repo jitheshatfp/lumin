@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "HDR Luminance Controls",
-    short_name: "HDR Luminance",
+    name: "Design Prototypes",
+    short_name: "Prototypes",
     description:
-      "Tune Display P3 channel values and glow spread for HDR-capable screens.",
+      "Interactive prototypes: tune Display P3 HDR glow CSS, and explore an interactive plexus node field.",
     start_url: "/",
     display: "standalone",
     background_color: "#080808",

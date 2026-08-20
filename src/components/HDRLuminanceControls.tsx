@@ -140,8 +140,8 @@ export default function HDRLuminanceControls() {
   } as CSSProperties;
 
   return (
-    <main className={styles.app}>
-      <h1 className={styles.title}>HDR Luminance Controls</h1>
+    <div className={styles.panel}>
+      <h2 className={styles.title}>HDR Luminance Controls</h2>
       <p className={styles.subtitle}>
         Tune Display P3 channel values and glow spread for HDR-capable
         screens, then copy the generated CSS.
@@ -209,6 +209,6 @@ export default function HDRLuminanceControls() {
           <code>{generatedCss}</code>
         </pre>
       </section>
-    </main>
+    </div>
   );
 }

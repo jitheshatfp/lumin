@@ -1,4 +1,4 @@
-import HDRLuminanceControls from "@/components/HDRLuminanceControls";
+import PrototypeTabs from "@/components/PrototypeTabs";
 
 // This page must render per-request (not be statically prerendered) so the
 // CSP nonce middleware.ts generates for each request matches the nonce Next
@@ -8,5 +8,5 @@ import HDRLuminanceControls from "@/components/HDRLuminanceControls";
 export const dynamic = "force-dynamic";
 
 export default function Home() {
-  return <HDRLuminanceControls />;
+  return <PrototypeTabs />;
 }
