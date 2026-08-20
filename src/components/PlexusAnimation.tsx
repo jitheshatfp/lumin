@@ -9,9 +9,10 @@ const DEFAULT_NODES = 80;
 const NODE_STEP = 5;
 
 const MIN_BRIGHTNESS = 0.3;
-const MAX_BRIGHTNESS = 2;
+const MAX_BRIGHTNESS = 8;
 const DEFAULT_BRIGHTNESS = 1;
 const BRIGHTNESS_STEP = 0.1;
+const MAX_EFFECT_BRIGHTNESS = 6;
 
 const INFLUENCE_RADIUS = 180;
 const MAX_LINK_DISTANCE = 120;
@@ -162,13 +163,14 @@ export default function PlexusAnimation() {
 
       for (const node of nodes) {
         const alpha = Math.min(1, node.brightness * globalBrightness);
-        const radius = node.r * (0.6 + 1.8 * node.brightness * Math.min(globalBrightness, 1.6));
+        const radius =
+          node.r * (0.6 + 1.8 * node.brightness * Math.min(globalBrightness, MAX_EFFECT_BRIGHTNESS));
 
         if (glowEnabledRef.current) {
           const glow = Math.max(0, (node.brightness - 0.35) / 0.65);
           if (glow > 0.02) {
             ctx!.shadowColor = `rgba(255, 255, 255, ${Math.min(1, glow * globalBrightness)})`;
-            ctx!.shadowBlur = 18 * glow * Math.min(globalBrightness, 1.6);
+            ctx!.shadowBlur = 18 * glow * Math.min(globalBrightness, MAX_EFFECT_BRIGHTNESS);
           } else {
             ctx!.shadowBlur = 0;
           }
