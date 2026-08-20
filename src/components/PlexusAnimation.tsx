@@ -130,7 +130,6 @@ export default function PlexusAnimation() {
         node.brightness += (target - node.brightness) * EASE;
       }
 
-      ctx!.lineWidth = 1;
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
           const a = nodes[i];
@@ -142,10 +141,11 @@ export default function PlexusAnimation() {
 
           const proximity = 1 - dist / MAX_LINK_DISTANCE;
           const avgBrightness = (a.brightness + b.brightness) / 2;
-          const alpha = Math.min(1, proximity * avgBrightness * globalBrightness * 0.8);
+          const alpha = Math.min(1, proximity * avgBrightness * globalBrightness * 1.15);
           if (alpha < 0.01) continue;
 
-          ctx!.strokeStyle = `rgba(200, 220, 255, ${alpha})`;
+          ctx!.lineWidth = 0.6 + avgBrightness * 1.8 * Math.min(globalBrightness, 1.5);
+          ctx!.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
           ctx!.beginPath();
           ctx!.moveTo(a.x, a.y);
           ctx!.lineTo(b.x, b.y);
@@ -155,12 +155,22 @@ export default function PlexusAnimation() {
 
       for (const node of nodes) {
         const alpha = Math.min(1, node.brightness * globalBrightness);
-        const radius = node.r * (0.7 + 0.6 * node.brightness * Math.min(globalBrightness, 1.4));
+        const radius = node.r * (0.6 + 1.8 * node.brightness * Math.min(globalBrightness, 1.6));
+
+        const glow = Math.max(0, (node.brightness - 0.35) / 0.65);
+        if (glow > 0.02) {
+          ctx!.shadowColor = `rgba(255, 255, 255, ${Math.min(1, glow * globalBrightness)})`;
+          ctx!.shadowBlur = 18 * glow * Math.min(globalBrightness, 1.6);
+        } else {
+          ctx!.shadowBlur = 0;
+        }
+
         ctx!.beginPath();
         ctx!.fillStyle = `rgba(255, 255, 255, ${alpha})`;
         ctx!.arc(node.x, node.y, radius, 0, Math.PI * 2);
         ctx!.fill();
       }
+      ctx!.shadowBlur = 0;
 
       frameId = requestAnimationFrame(draw);
     }
