@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createUISFX, type UISFXPlayer } from "uisfx";
 import styles from "./PlexusAnimation.module.css";
 
 const MIN_NODES = 20;
@@ -14,10 +15,34 @@ const DEFAULT_BRIGHTNESS = 1;
 const BRIGHTNESS_STEP = 0.1;
 const MAX_EFFECT_BRIGHTNESS = 6;
 
+const MIN_NODE_SIZE = 0.5;
+const MAX_NODE_SIZE = 3;
+const DEFAULT_NODE_SIZE = 1;
+const NODE_SIZE_STEP = 0.1;
+
 const INFLUENCE_RADIUS = 180;
 const MAX_LINK_DISTANCE = 120;
 const BASELINE_BRIGHTNESS = 0.15;
 const EASE = 0.08;
+
+// Hysteresis gap so a node drifting right at the edge of the pointer's
+// influence radius doesn't rapidly retrigger the activation sound.
+const ACTIVATE_BRIGHTNESS = 0.55;
+const DEACTIVATE_BRIGHTNESS = 0.4;
+
+const SOUND_STORAGE_KEY = "lumin-plexus-sound";
+
+function readPersistedSoundEnabled(): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    const raw = window.localStorage.getItem(SOUND_STORAGE_KEY);
+    if (!raw) return true;
+    const parsed = JSON.parse(raw) as { enabled?: boolean };
+    return typeof parsed.enabled === "boolean" ? parsed.enabled : true;
+  } catch {
+    return true;
+  }
+}
 
 type PlexusNode = {
   x: number;
@@ -26,6 +51,7 @@ type PlexusNode = {
   vy: number;
   r: number;
   brightness: number;
+  active: boolean;
 };
 
 function createNodes(count: number, width: number, height: number): PlexusNode[] {
@@ -36,6 +62,7 @@ function createNodes(count: number, width: number, height: number): PlexusNode[]
     vy: (Math.random() - 0.5) * 0.3,
     r: 1.5 + Math.random() * 1.5,
     brightness: BASELINE_BRIGHTNESS,
+    active: false,
   }));
 }
 
@@ -45,21 +72,51 @@ export default function PlexusAnimation() {
   const pointerRef = useRef<{ x: number; y: number } | null>(null);
   const sizeRef = useRef({ width: 0, height: 0 });
   const brightnessRef = useRef(DEFAULT_BRIGHTNESS);
+  const nodeSizeRef = useRef(DEFAULT_NODE_SIZE);
   const reducedMotionRef = useRef(false);
 
   const glowEnabledRef = useRef(true);
+  const soundEnabledRef = useRef(true);
+  const playerRef = useRef<UISFXPlayer | null>(null);
 
   const [nodeCount, setNodeCount] = useState(DEFAULT_NODES);
   const [brightness, setBrightness] = useState(DEFAULT_BRIGHTNESS);
+  const [nodeSize, setNodeSize] = useState(DEFAULT_NODE_SIZE);
   const [glowEnabled, setGlowEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(readPersistedSoundEnabled);
 
   useEffect(() => {
     brightnessRef.current = brightness;
   }, [brightness]);
 
   useEffect(() => {
+    nodeSizeRef.current = nodeSize;
+  }, [nodeSize]);
+
+  useEffect(() => {
     glowEnabledRef.current = glowEnabled;
   }, [glowEnabled]);
+
+  useEffect(() => {
+    soundEnabledRef.current = soundEnabled;
+  }, [soundEnabled]);
+
+  // Mechanical-pack player for node activation clicks. Created once; its own
+  // enabled/volume/pack preferences persist in localStorage.
+  useEffect(() => {
+    const player = createUISFX({
+      pack: "mechanical",
+      volume: 0.5,
+      enabled: readPersistedSoundEnabled(),
+      preferences: { key: SOUND_STORAGE_KEY },
+    });
+    playerRef.current = player;
+
+    return () => {
+      void player.destroy();
+      playerRef.current = null;
+    };
+  }, []);
 
   // Canvas setup, resize/pointer listeners, and the draw loop — created once.
   useEffect(() => {
@@ -104,6 +161,12 @@ export default function PlexusAnimation() {
     canvas.addEventListener("pointermove", handlePointerMove);
     canvas.addEventListener("pointerleave", handlePointerLeave);
 
+    // Audio must be unlocked from within a trusted user gesture.
+    function handlePointerDown() {
+      void playerRef.current?.unlock();
+    }
+    canvas.addEventListener("pointerdown", handlePointerDown, { once: true });
+
     let frameId: number;
 
     function draw() {
@@ -136,6 +199,15 @@ export default function PlexusAnimation() {
           }
         }
         node.brightness += (target - node.brightness) * EASE;
+
+        if (!node.active && node.brightness > ACTIVATE_BRIGHTNESS) {
+          node.active = true;
+          if (soundEnabledRef.current) {
+            playerRef.current?.play("toggle-on");
+          }
+        } else if (node.active && node.brightness < DEACTIVATE_BRIGHTNESS) {
+          node.active = false;
+        }
       }
 
       for (let i = 0; i < nodes.length; i++) {
@@ -164,7 +236,9 @@ export default function PlexusAnimation() {
       for (const node of nodes) {
         const alpha = Math.min(1, node.brightness * globalBrightness);
         const radius =
-          node.r * (0.6 + 1.8 * node.brightness * Math.min(globalBrightness, MAX_EFFECT_BRIGHTNESS));
+          node.r *
+          nodeSizeRef.current *
+          (0.6 + 1.8 * node.brightness * Math.min(globalBrightness, MAX_EFFECT_BRIGHTNESS));
 
         if (glowEnabledRef.current) {
           const glow = Math.max(0, (node.brightness - 0.35) / 0.65);
@@ -195,6 +269,7 @@ export default function PlexusAnimation() {
       resizeObserver.disconnect();
       canvas.removeEventListener("pointermove", handlePointerMove);
       canvas.removeEventListener("pointerleave", handlePointerLeave);
+      canvas.removeEventListener("pointerdown", handlePointerDown);
       motionQuery.removeEventListener("change", handleMotionChange);
     };
   }, []);
@@ -271,6 +346,29 @@ export default function PlexusAnimation() {
               {nodeCount}
             </output>
           </div>
+          <div className={styles.sliderRow}>
+            <label htmlFor="plexus-size" className={styles.sliderLabel}>
+              Size
+            </label>
+            <input
+              type="range"
+              className={styles.slider}
+              id="plexus-size"
+              min={MIN_NODE_SIZE}
+              max={MAX_NODE_SIZE}
+              step={NODE_SIZE_STEP}
+              value={nodeSize}
+              onChange={(e) => setNodeSize(parseFloat(e.target.value))}
+              aria-describedby="plexus-size-val"
+            />
+            <output
+              htmlFor="plexus-size"
+              id="plexus-size-val"
+              className={styles.sliderValue}
+            >
+              {nodeSize.toFixed(1)}x
+            </output>
+          </div>
           <div className={styles.checkboxRow}>
             <span id="plexus-glow-label" className={styles.sliderLabel}>
               Glow
@@ -283,6 +381,25 @@ export default function PlexusAnimation() {
                 checked={glowEnabled}
                 onChange={(e) => setGlowEnabled(e.target.checked)}
                 aria-labelledby="plexus-glow-label"
+              />
+              <span className={styles.toggleTrack} aria-hidden="true" />
+            </label>
+          </div>
+          <div className={styles.checkboxRow}>
+            <span id="plexus-sound-label" className={styles.sliderLabel}>
+              Sound
+            </span>
+            <label className={styles.toggle}>
+              <input
+                type="checkbox"
+                role="switch"
+                className={styles.toggleInput}
+                checked={soundEnabled}
+                onChange={(e) => {
+                  setSoundEnabled(e.target.checked);
+                  playerRef.current?.setEnabled(e.target.checked);
+                }}
+                aria-labelledby="plexus-sound-label"
               />
               <span className={styles.toggleTrack} aria-hidden="true" />
             </label>
