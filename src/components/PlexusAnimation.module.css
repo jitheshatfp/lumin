@@ -66,6 +66,19 @@
   gap: 1rem;
 }
 
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--text-primary);
+  cursor: pointer;
+}
+
 .sliderLabel {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.7rem;

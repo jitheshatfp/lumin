@@ -46,12 +46,19 @@ export default function PlexusAnimation() {
   const brightnessRef = useRef(DEFAULT_BRIGHTNESS);
   const reducedMotionRef = useRef(false);
 
+  const glowEnabledRef = useRef(true);
+
   const [nodeCount, setNodeCount] = useState(DEFAULT_NODES);
   const [brightness, setBrightness] = useState(DEFAULT_BRIGHTNESS);
+  const [glowEnabled, setGlowEnabled] = useState(true);
 
   useEffect(() => {
     brightnessRef.current = brightness;
   }, [brightness]);
+
+  useEffect(() => {
+    glowEnabledRef.current = glowEnabled;
+  }, [glowEnabled]);
 
   // Canvas setup, resize/pointer listeners, and the draw loop — created once.
   useEffect(() => {
@@ -144,7 +151,7 @@ export default function PlexusAnimation() {
           const alpha = Math.min(1, proximity * avgBrightness * globalBrightness * 1.15);
           if (alpha < 0.01) continue;
 
-          ctx!.lineWidth = 0.6 + avgBrightness * 1.8 * Math.min(globalBrightness, 1.5);
+          ctx!.lineWidth = 0.5;
           ctx!.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
           ctx!.beginPath();
           ctx!.moveTo(a.x, a.y);
@@ -157,10 +164,14 @@ export default function PlexusAnimation() {
         const alpha = Math.min(1, node.brightness * globalBrightness);
         const radius = node.r * (0.6 + 1.8 * node.brightness * Math.min(globalBrightness, 1.6));
 
-        const glow = Math.max(0, (node.brightness - 0.35) / 0.65);
-        if (glow > 0.02) {
-          ctx!.shadowColor = `rgba(255, 255, 255, ${Math.min(1, glow * globalBrightness)})`;
-          ctx!.shadowBlur = 18 * glow * Math.min(globalBrightness, 1.6);
+        if (glowEnabledRef.current) {
+          const glow = Math.max(0, (node.brightness - 0.35) / 0.65);
+          if (glow > 0.02) {
+            ctx!.shadowColor = `rgba(255, 255, 255, ${Math.min(1, glow * globalBrightness)})`;
+            ctx!.shadowBlur = 18 * glow * Math.min(globalBrightness, 1.6);
+          } else {
+            ctx!.shadowBlur = 0;
+          }
         } else {
           ctx!.shadowBlur = 0;
         }
@@ -254,6 +265,18 @@ export default function PlexusAnimation() {
             >
               {nodeCount}
             </output>
+          </div>
+          <div className={styles.checkboxRow}>
+            <input
+              type="checkbox"
+              className={styles.checkbox}
+              id="plexus-glow"
+              checked={glowEnabled}
+              onChange={(e) => setGlowEnabled(e.target.checked)}
+            />
+            <label htmlFor="plexus-glow" className={styles.sliderLabel}>
+              Glow
+            </label>
           </div>
         </fieldset>
       </div>
